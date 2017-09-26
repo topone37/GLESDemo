@@ -12,6 +12,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
@@ -26,23 +27,33 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
             1.0f, -1.0f, 0.0f//right
 
     };
+    private static final float[] TRIANGLE_COLORS = {
+            0.0f, 1.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f, 1.0f
+
+    };
     private static final float[] COLOR = {1.0f, 1.0f, 1.0f, 1.0f};//white
     private int mProgram;
     private static final String VERTEX_SHADER =
-            "attribute vec4 vPosition;" +
-                    "uniform mat4 vMatrix;" +
-                    "void main() {" +
-                    "  gl_Position = vMatrix*vPosition;" +
+            "attribute vec4 vPosition;\n" +
+                    "uniform mat4 vMatrix;\n" +
+                    "varying vec4 vColor;" +
+                    "attribute vec4 aColor;" +
+                    "void main() {\n" +
+                    "  gl_Position = vMatrix*vPosition;\n" +
+                    "  vColor = aColor; " +
                     "}";
     //gl_Position和gl_FragColor都是Shader的内置变量，分别为定点位置和片元颜色。
     private static final String FRAGMENT_SHADER =
             "precision mediump float;\n" +
-                    " uniform vec4 vColor;\n" +
+                    " varying vec4 vColor;\n" +
                     " void main() {\n" +
                     "     gl_FragColor = vColor;\n" +
                     " }";
 
     private FloatBuffer mVertexBuff;
+    private FloatBuffer mColorBuff;
 
     public Demo001GLSurfaceView(Context context) {
         this(context, null);
@@ -70,6 +81,13 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
 
         mVertexBuff.put(TRIANGLE_COORDS);/*讲数据填入*/
         mVertexBuff.position(0);/**读/写的数据的索引*/
+
+        ByteBuffer bc = ByteBuffer.allocateDirect(TRIANGLE_COLORS.length * 4);
+        bc.order(ByteOrder.nativeOrder());
+        mColorBuff = bc.asFloatBuffer();
+        mColorBuff.put(TRIANGLE_COLORS);
+        mColorBuff.position(0);
+
 
         int vertex_shader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);/**创建一个Shader对象*/
         if (vertex_shader != 0) {
@@ -119,15 +137,6 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
 
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-//        float ratio = (float) width / height;
-//        //设置透视投影
-//        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 7);
-//        //设置相机 位置
-//        Matrix.setLookAtM(mViewMatrix,0, 0, 0, 7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
-//
-//        Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
-//
-//        GLES20.glViewport(0, 0, width, height);
         //计算宽高比
         float ratio = (float) width / height;
         //设置透视投影
@@ -152,8 +161,12 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         GLES20.glEnableVertexAttribArray(positionHandle);
 
         GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, mVertexBuff);
-        int colorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-        GLES20.glUniform4fv(colorHandle, 1, COLOR, 0);
+//        int colorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
+//        GLES20.glUniform4fv(colorHandle, 1, COLOR, 0);
+        int aColorHandle = GLES20.glGetAttribLocation(mProgram, "aColor");
+        GLES20.glEnableVertexAttribArray(aColorHandle);
+        GLES20.glVertexAttribPointer(aColorHandle, 4, GLES20.GL_FLOAT, false, 0, mColorBuff);
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 3);
         GLES20.glDisableVertexAttribArray(positionHandle);
 
