@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.tp.gl.demo001.Demo001GLSurfaceView
-        android:id="@+id/gl_view"
+    <com.tp.gl.demo001.Demo002GLSurfaceView
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </LinearLayout>

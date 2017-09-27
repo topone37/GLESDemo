@@ -10,30 +10,31 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Created by root on 17-9-25.
- * 彩色三角形
  */
 
-public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer {
+public class Demo002GLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer {
 
-    private static final float[] TRIANGLE_COORDS = {
-            1.0f, 1.0f, 0.0f,//top
-            -1.0f, -1.0f, 0.0f,//left
-            1.0f, -1.0f, 0.0f//right
+    private static final float[] RECTANGELE_COORDS = {
+            -1.0f, 1.0f, 0.0f,//top left
+            -1.0f, -1.0f, 0.0f,//bottom left
+            1.0f, -1.0f, 0.0f,//bottom right
+            1.0f, 1.0f, 0.0f//top right
 
     };
-    private static final float[] TRIANGLE_COLORS = {
+    private static final float[] RECTANGLE_COLORS = {
             0.0f, 1.0f, 0.0f, 1.0f,
             1.0f, 0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f, 1.0f
+            0.0f, 0.0f, 1.0f, 1.0f,
+            0.0f, 1.0f, 1.0f, 1.0f
 
     };
-    private static final float[] COLOR = {1.0f, 1.0f, 1.0f, 1.0f};//white
     private int mProgram;
     private static final String VERTEX_SHADER =
             "attribute vec4 vPosition;\n" +
@@ -54,12 +55,13 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
 
     private FloatBuffer mVertexBuff;
     private FloatBuffer mColorBuff;
+    private ShortBuffer mInDexBuff;
 
-    public Demo001GLSurfaceView(Context context) {
+    public Demo002GLSurfaceView(Context context) {
         this(context, null);
     }
 
-    public Demo001GLSurfaceView(Context context, AttributeSet attrs) {
+    public Demo002GLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
@@ -74,20 +76,25 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);//设置清屏颜色,只有你调用  GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);起作用
-        ByteBuffer bb = ByteBuffer.allocateDirect(TRIANGLE_COORDS.length * 4);//分配
+        ByteBuffer bb = ByteBuffer.allocateDirect(RECTANGELE_COORDS.length * 4);//分配
         bb.order(ByteOrder.nativeOrder());//一定要用native的字节序 (大小端字节问题)
         mVertexBuff = bb.asFloatBuffer();
 
 
-        mVertexBuff.put(TRIANGLE_COORDS);/*讲数据填入*/
+        mVertexBuff.put(RECTANGELE_COORDS);/*讲数据填入*/
         mVertexBuff.position(0);/**读/写的数据的索引*/
 
-        ByteBuffer bc = ByteBuffer.allocateDirect(TRIANGLE_COLORS.length * 4);
+        ByteBuffer bc = ByteBuffer.allocateDirect(RECTANGLE_COLORS.length * 4);
         bc.order(ByteOrder.nativeOrder());
         mColorBuff = bc.asFloatBuffer();
-        mColorBuff.put(TRIANGLE_COLORS);
+        mColorBuff.put(RECTANGLE_COLORS);
         mColorBuff.position(0);
 
+        ByteBuffer cc = ByteBuffer.allocateDirect(index.length * 2);
+        cc.order(ByteOrder.nativeOrder());
+        mInDexBuff = cc.asShortBuffer();
+        mInDexBuff.put(index);
+        mInDexBuff.position(0);
 
         int vertex_shader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);/**创建一个Shader对象*/
         if (vertex_shader != 0) {
@@ -147,6 +154,10 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
     }
 
+    static short index[] = {
+            0, 1, 2, 0, 2, 3
+    };
+
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -160,14 +171,14 @@ public class Demo001GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         int positionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
         GLES20.glEnableVertexAttribArray(positionHandle);
 
-        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, mVertexBuff);
-//        int colorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-//        GLES20.glUniform4fv(colorHandle, 1, COLOR, 0);
+        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 3 * 4, mVertexBuff);
         int aColorHandle = GLES20.glGetAttribLocation(mProgram, "aColor");
         GLES20.glEnableVertexAttribArray(aColorHandle);
         GLES20.glVertexAttribPointer(aColorHandle, 4, GLES20.GL_FLOAT, false, 0, mColorBuff);
 
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 3);
+//        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0,4);
+
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, mInDexBuff);/**GL_UNSIGNED_SHORT 记得 不是 GL_SHORT*/
         GLES20.glDisableVertexAttribArray(positionHandle);
 
     }
