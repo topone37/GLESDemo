@@ -176,9 +176,9 @@ public class Demo002GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         GLES20.glEnableVertexAttribArray(aColorHandle);
         GLES20.glVertexAttribPointer(aColorHandle, 4, GLES20.GL_FLOAT, false, 0, mColorBuff);
 
-//        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0,4);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0,4);
 
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, mInDexBuff);/**GL_UNSIGNED_SHORT 记得 不是 GL_SHORT*/
+//        GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, mInDexBuff);/**GL_UNSIGNED_SHORT 记得 不是 GL_SHORT*/
         GLES20.glDisableVertexAttribArray(positionHandle);
 
     }
