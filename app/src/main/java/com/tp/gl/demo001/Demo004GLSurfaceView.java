@@ -61,35 +61,6 @@ public class Demo004GLSurfaceView extends GLSurfaceView implements GLSurfaceView
     };
 
 
-//    final float vertexs[] = {
-//            -1.0f, 1.0f, 1.0f,    //正面左上0
-//            -1.0f, -1.0f, 1.0f,   //正面左下1
-//            1.0f, -1.0f, 1.0f,    //正面右下2
-//            1.0f, 1.0f, 1.0f,     //正面右上3
-//            -1.0f, 1.0f, -1.0f,    //反面左上4
-//            -1.0f, -1.0f, -1.0f,   //反面左下5
-//            1.0f, -1.0f, -1.0f,    //反面右下6
-//            1.0f, 1.0f, -1.0f,     //反面右上7
-//    };
-//    final short index[] = {
-//            6, 7, 4, 6, 4, 5,    //后面
-//            6, 3, 7, 6, 2, 3,    //右面
-//            6, 5, 1, 6, 1, 2,    //下面
-//            0, 3, 2, 0, 2, 1,    //正面
-//            0, 1, 5, 0, 5, 4,    //左面
-//            0, 7, 3, 0, 4, 7,    //上面
-//    };
-//
-//    float color[] = {
-//            0f, 1f, 0f, 1f,
-//            0f, 1f, 0f, 1f,
-//            0f, 1f, 0f, 1f,
-//            0f, 1f, 0f, 1f,
-//            1f, 0f, 0f, 1f,
-//            1f, 0f, 0f, 1f,
-//            1f, 0f, 0f, 1f,
-//            1f, 0f, 0f, 1f,
-//    };
 
     private int mProgram;
     private static final String VERTEX_SHADER =
@@ -125,7 +96,7 @@ public class Demo004GLSurfaceView extends GLSurfaceView implements GLSurfaceView
 
     private void init() {
         setEGLContextClientVersion(2);
-        setEGLConfigChooser(8, 8, 8, 8, 0, 0);
+        setEGLConfigChooser(8, 8, 8, 8, 16, 0);//88800->888160 depth size加上/*todo 坑爹呀 我屮艸芔茻*/
         setRenderer(this);/**必须要先设置回调接口,在设置渲染模式*/
         setRenderMode(RENDERMODE_CONTINUOUSLY);
 
@@ -134,10 +105,9 @@ public class Demo004GLSurfaceView extends GLSurfaceView implements GLSurfaceView
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-//       // GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);//设置清屏颜色,只有你调用  GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);起作用
-//        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+       // GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);//设置清屏颜色,只有你调用  GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);起作用
         //开启深度测试
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);//setEGLConfigChooser一定要加DepthSize
 
         ByteBuffer bb = ByteBuffer.allocateDirect(vertexs.length * 4);//分配
         bb.order(ByteOrder.nativeOrder());//一定要用native的字节序 (大小端字节问题)
