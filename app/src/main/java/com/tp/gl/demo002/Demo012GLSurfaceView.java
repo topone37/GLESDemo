@@ -16,9 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 
-import javax.crypto.ShortBufferException;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -239,20 +237,33 @@ public class Demo012GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         GLES20.glEnableVertexAttribArray(glHPosition);
         GLES20.glEnableVertexAttribArray(glHCoordinate);
         int glHTexture = GLES20.glGetUniformLocation(mProgram, "vTexture");
-        GLES20.glUniform1i(glHTexture, 0);
-        textureId = createTexture();
-        //传入顶点坐标
+
         GLES20.glVertexAttribPointer(glHPosition, 2, GLES20.GL_FLOAT, false, 0, mVertexBuff);
         //传入纹理坐标
         GLES20.glVertexAttribPointer(glHCoordinate, 2, GLES20.GL_FLOAT, false, 0, mColorBuff);
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_INT, mIndexBuff);
+        createTexture(R.mipmap.test, 0);
+        GLES20.glUniform1i(glHTexture, 0);
+        //传入顶点坐标
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+        createTexture(R.mipmap.moto, 1);
+        GLES20.glUniform1i(glHTexture, 1);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 1 * 4, 4);
+        createTexture(R.mipmap.moto, 2);
+        GLES20.glUniform1i(glHTexture, 2);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 2 * 4, 4);
+        createTexture(R.mipmap.test, 3);
+        GLES20.glUniform1i(glHTexture, 3);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 3 * 4, 4);
     }
 
-    private int createTexture() {
+    private void createTexture(int resId, int i) {
         int[] texture = new int[1];
+        mBitmap = BitmapFactory.decodeResource(getResources(), resId);
         if (mBitmap != null && !mBitmap.isRecycled()) {
             //生成纹理
             GLES20.glGenTextures(1, texture, 0);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
             //生成纹理
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0]);
             //设置缩小过滤为使用纹理中坐标最接近的一个像素的颜色作为需要绘制的像素颜色
@@ -265,8 +276,6 @@ public class Demo012GLSurfaceView extends GLSurfaceView implements GLSurfaceView
             GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
             //根据以上指定的参数，生成一个2D纹理
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
-            return texture[0];
         }
-        return 0;
     }
 }
