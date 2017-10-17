@@ -7,6 +7,7 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -31,37 +32,46 @@ public class Demo012GLSurfaceView extends GLSurfaceView implements GLSurfaceView
             "attribute vec2 aCoordinate;" +
             "varying vec2 vCoordinate;" +
             "uniform mat4 uMatrix;" +
+            "varying mat4 vMatrix;" +
             "void main() {" +
             "   gl_Position = uMatrix * aPosition ;" +
             "   vCoordinate = aCoordinate ;" +
+            "   vMatrix = uMatrix;" +
             "}";
     private static final String FRAGMENT_SOURCE = " precision mediump float;\n" +
             "    uniform sampler2D vTexture;\n" +
             "    varying vec2 vCoordinate;\n" +
+            "    varying mat4 vMatrix;" +
             "    void main(){\n" +
-            "        gl_FragColor=texture2D(vTexture,vCoordinate);\n" +
+//            " gl_FragColor = texture2D(vTexture,(vMatrix * vec4(vCoordinate - vec2(0.5), 0.0, 1.0)).xy + vec2(0.5));  " +
+//            "        gl_FragColor=texture2D(vTexture,vCoordinate);\n" +
+            "        gl_FragColor=vec4(1.0,1.0,0.0,1.0);\n" +
             "    }";
     private final float[] sPos = {
-            /************左上角************/
+//            /************左上角************/
+//            -1.0f, 1.0f,
+//            -1.0f, 0.0f,
+//            0.0f, 1.0f,
+//            0.0f, 0.0f,
+//            /************右上角************/
+//            0.0f, 1.0f,
+//            0.0f, 0.0f,
+//            1.0f, 1.0f,
+//            1.0f, 0.0f,
+//            /************左下角************/
+//            -1.0f, 0.0f,
+//            -1.0f, -1.0f,
+//            0.0f, 0.0f,
+//            0.0f, -1.0f,
+//            /************右下角************/
+//            0.0f, 0.0f,
+//            0.0f, -1.0f,
+//            1.0f, 0.0f,
+//            1.0f, -1.0f,
             -1.0f, 1.0f,
-            -1.0f, 0.0f,
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-            /************右上角************/
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            /************左下角************/
-            -1.0f, 0.0f,
             -1.0f, -1.0f,
-            0.0f, 0.0f,
-            0.0f, -1.0f,
-            /************右下角************/
-            0.0f, 0.0f,
-            0.0f, -1.0f,
-            1.0f, 0.0f,
-            1.0f, -1.0f,
+            1.0f, 1.0f,
+            1.0f, -1.0f
 
 
     };
@@ -126,7 +136,7 @@ public class Demo012GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         setEGLContextClientVersion(2);
         setEGLConfigChooser(8, 8, 8, 8, 8, 0);
         setRenderer(this);
-        setRenderMode(RENDERMODE_WHEN_DIRTY);
+        setRenderMode(RENDERMODE_CONTINUOUSLY);
     }
 
     @Override
@@ -226,12 +236,23 @@ public class Demo012GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         requestRender();
     }
 
+    /**
+     * 旋转变形（ Matrix.multiplyMM 该方法来整合最初的 矩阵 以及投影矩阵）
+     * @param gl
+     */
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glUseProgram(mProgram);
         int glHMatrix = GLES20.glGetUniformLocation(mProgram, "uMatrix");
-        GLES20.glUniformMatrix4fv(glHMatrix, 1, false, mMVPMatrix, 0);
+        long time = SystemClock.uptimeMillis() % 4000L;
+        float angle = 0.090f * ((int) time);
+        float[] mRotationMatrix = new float[16];
+        Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, -1.0f);
+
+        float[] result = new float[16];
+        Matrix.multiplyMM(result, 0, mMVPMatrix, 0, mRotationMatrix, 0);
+        GLES20.glUniformMatrix4fv(glHMatrix, 1, false, result, 0);
         int glHPosition = GLES20.glGetAttribLocation(mProgram, "aPosition");
         int glHCoordinate = GLES20.glGetAttribLocation(mProgram, "aCoordinate");
         GLES20.glEnableVertexAttribArray(glHPosition);
@@ -245,16 +266,24 @@ public class Demo012GLSurfaceView extends GLSurfaceView implements GLSurfaceView
         GLES20.glUniform1i(glHTexture, 0);
         //传入顶点坐标
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-
-        createTexture(R.mipmap.moto, 1);
-        GLES20.glUniform1i(glHTexture, 1);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 1 * 4, 4);
-        createTexture(R.mipmap.moto, 2);
-        GLES20.glUniform1i(glHTexture, 2);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 2 * 4, 4);
-        createTexture(R.mipmap.test, 3);
-        GLES20.glUniform1i(glHTexture, 3);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 3 * 4, 4);
+//        Matrix.setIdentityM(mMVPMatrix, 0);
+//        Matrix.setRotateM(mMVPMatrix, 0, 30, 0.5f, 0.5f, 0);
+//        GLES20.glUniformMatrix4fv(glHMatrix, 1, false, mMVPMatrix, 0);
+//        createTexture(R.mipmap.moto, 1);
+//        GLES20.glUniform1i(glHTexture, 1);
+//        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 1 * 4, 4);
+//        Matrix.setIdentityM(mMVPMatrix, 0);
+//        Matrix.setRotateM(mMVPMatrix, 0, 30, 0.5f, 0.5f, 0);
+//        GLES20.glUniformMatrix4fv(glHMatrix, 1, false, mMVPMatrix, 0);
+//        createTexture(R.mipmap.moto, 2);
+//        GLES20.glUniform1i(glHTexture, 2);
+//        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 2 * 4, 4);
+//        Matrix.setIdentityM(mMVPMatrix, 0);
+//        Matrix.setRotateM(mMVPMatrix, 0, 30, 0.5f, 0.5f, 0);
+//        GLES20.glUniformMatrix4fv(glHMatrix, 1, false, mMVPMatrix, 0);
+//        createTexture(R.mipmap.test, 3);
+//        GLES20.glUniform1i(glHTexture, 3);
+//        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 3 * 4, 4);
     }
 
     private void createTexture(int resId, int i) {
